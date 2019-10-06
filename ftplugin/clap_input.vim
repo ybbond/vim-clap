@@ -28,6 +28,7 @@ setlocal
 
 function! s:preview() abort
   echom "preview unimplemented"
+  return ''
 endfunction
 
 function! s:action(action) abort
@@ -58,6 +59,8 @@ inoremap <silent> <buffer> <Esc> <Esc>:call clap#handler#exit()<CR>
 
 inoremap <silent> <buffer> <C-j> <C-R>=clap#handler#navigate_result('down')<CR>
 inoremap <silent> <buffer> <C-k> <C-R>=clap#handler#navigate_result('up')<CR>
+
+inoremap <silent> <buffer> <C-Q> <C-R>=clap#handler#toggle_help()<CR>
 
 inoremap <silent> <buffer> <Tab> <C-R>=clap#handler#select_toggle()<CR>
 

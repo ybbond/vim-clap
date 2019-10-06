@@ -146,5 +146,10 @@ function! clap#handler#select_toggle() abort
   return ''
 endfunction
 
+function! clap#handler#toggle_help() abort
+  call g:clap#floating_win#help.toggle()
+  return ''
+endfunction
+
 let &cpo = s:save_cpo
 unlet s:save_cpo

@@ -8,6 +8,7 @@ let g:clap#floating_win#input = {}
 let g:clap#floating_win#display = {}
 let g:clap#floating_win#spinner = {}
 let g:clap#floating_win#preview = {}
+let g:clap#floating_win#help = {}
 
 let s:spinner_bufnr = nvim_create_buf(v:false, v:true)
 let g:clap.spinner.bufnr = s:spinner_bufnr
@@ -19,6 +20,8 @@ let s:display_bufnr = nvim_create_buf(v:false, v:true)
 let g:clap.display.bufnr = s:display_bufnr
 
 let s:preview_bufnr = nvim_create_buf(v:false, v:true)
+
+let s:help_bufnr = nvim_create_buf(v:false, v:true)
 
 function! s:prepare_opts(row, col, width, height, ...) abort
   let base_opts = {
@@ -40,7 +43,7 @@ let s:display_opts = {
       \ }
 
 let s:display_winhl = 'Normal:ClapDisplay,EndOfBuffer:ClapDisplayInvisibleEndOfBuffer,SignColumn:ClapDisplay'
-let s:preview_winhl = 'Normal:ClapPreview,EndOfBuffer:ClapPreviewInvisibleEndOfBuffer:SignColumn:ClapPreview'
+let s:preview_winhl = 'Normal:ClapPreview,EndOfBuffer:ClapPreviewInvisibleEndOfBuffer,SignColumn:ClapPreview'
 
 "  -----------------------------
 " | spinner | input             |
@@ -50,7 +53,7 @@ let s:preview_winhl = 'Normal:ClapPreview,EndOfBuffer:ClapPreviewInvisibleEndOfB
 " |          preview            |
 "  -----------------------------
 function! g:clap#floating_win#display.open() abort
-  silent let s:display_winid = nvim_open_win(s:display_bufnr, v:true, s:display_opts)
+  silent let s:display_winid = nvim_open_win(s:display_bufnr, v:false, s:display_opts)
 
   call setwinvar(s:display_winid, '&winhl', s:display_winhl)
   call matchadd("ClapNoMatchesFound", g:__clap_no_matches_pattern, 10, 1001, {'window': s:display_winid})
@@ -89,7 +92,7 @@ function! g:clap#floating_win#spinner.open() abort
   let opts.height = 1
   let opts.focusable = v:false
 
-  silent let s:spinner_winid = nvim_open_win(s:spinner_bufnr, v:true, opts)
+  silent let s:spinner_winid = nvim_open_win(s:spinner_bufnr, v:false, opts)
 
   call setwinvar(s:spinner_winid, '&winhl', 'Normal:ClapSpinner')
   call setbufvar(s:spinner_bufnr, '&filetype', 'clap_spinner')
@@ -97,6 +100,41 @@ function! g:clap#floating_win#spinner.open() abort
 
   let g:clap.spinner = get(g:clap, 'spinner', {})
   let g:clap.spinner.winid = s:spinner_winid
+endfunction
+
+function! g:clap#floating_win#help.show() abort
+  if !exists('s:help_winid')
+    let opts = nvim_win_get_config(s:spinner_winid)
+    let opts.height = 5
+    let opts.row -= opts.height
+    let opts.focusable = v:false
+    let opts.width = s:display_opts.width
+
+    silent let s:help_winid = nvim_open_win(s:help_bufnr, v:false, opts)
+
+    call setwinvar(s:help_winid, '&winhl', 'Normal:ClapPreview')
+    call setbufvar(s:help_bufnr, '&number', 0)
+    call setbufvar(s:help_bufnr, '&cursorline', 0)
+    call setbufvar(s:help_bufnr, '&signcolumn', 'no')
+  endif
+  let help = ['<C-J>', '<C-K>', '<C-A>']
+  call clap#util#nvim_buf_set_lines(s:help_bufnr, help)
+endfunction
+
+function! g:clap#floating_win#help.toggle() abort
+  if exists('s:help_winid')
+    call clap#util#nvim_win_close_safe(s:help_winid)
+    unlet s:help_winid
+  else
+    call g:clap#floating_win#help.show()
+  endif
+endfunction
+
+function! g:clap#floating_win#help.close() abort
+  if exists('s:help_winid')
+    call clap#util#nvim_win_close_safe(s:help_winid)
+    unlet s:help_winid
+  endif
 endfunction
 
 function! g:clap#floating_win#input.open() abort
@@ -121,8 +159,9 @@ function! clap#floating_win#preview.show(lines) abort
     let opts = nvim_win_get_config(s:display_winid)
     let opts.row += opts.height
     let opts.height = opts.height / 2
+    let opts.focusable = v:false
 
-    silent let s:preview_winid = nvim_open_win(s:preview_bufnr, v:true, opts)
+    silent let s:preview_winid = nvim_open_win(s:preview_bufnr, v:false, opts)
 
     call setwinvar(s:preview_winid, '&winhl', s:preview_winhl)
     " call setwinvar(s:preview_winid, '&winblend', 15)
@@ -178,6 +217,7 @@ function! clap#floating_win#close() abort
   silent! autocmd! ClapEnsureAllClosed
 
   noautocmd call g:clap#floating_win#preview.close()
+  noautocmd call g:clap#floating_win#help.close()
   noautocmd call clap#util#nvim_win_close_safe(g:clap.input.winid)
   noautocmd call clap#util#nvim_win_close_safe(g:clap.spinner.winid)
 
