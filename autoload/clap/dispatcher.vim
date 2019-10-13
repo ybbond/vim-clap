@@ -26,9 +26,9 @@ if has('nvim')
       call extend(g:clap.display.cache, to_cache)
 
       " Converter
-      if s:has_converter
-        let to_append = map(to_append, 's:Converter(v:val)')
-      endif
+      " if s:has_converter
+        " let to_append = map(to_append, 's:Converter(v:val)')
+      " endif
 
       call g:clap.display.append_lines(to_append)
 
@@ -174,6 +174,17 @@ function! s:on_exit_common() abort
     call clap#sign#reset_to_first_line()
   endif
   call clap#spinner#set_idle()
+
+  for [lnum, indices] in items(g:to_match)
+    for idx in indices
+      call nvim_buf_add_highlight(g:clap.display.bufnr, -1, 'Search', str2nr(lnum), idx, idx+1)
+    endfor
+  endfor
+
+  " for idx in json_decoded.indices
+    " echom "idx: ".idx.", line: ".(g:clap.display.line_count() - 1)
+    " call nvim_buf_add_highlight(g:clap.display.bufnr, s:ns_id, 'Search', s:lnum, idx, idx+1)
+  " endfor
 endfunction
 
 function! s:has_no_matches() abort
